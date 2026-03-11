@@ -1,0 +1,16 @@
+google-genai>=1.0.0
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+vosk>=0.3.45
+pyaudio>=0.2.14
+plyer>=2.1.0
+pyautogui>=0.9.54
+psutil>=5.9.0
+pygetwindow>=0.0.9
+python-dotenv>=1.0.0
+keyboard>=0.13.5
+Pillow>=10.0.0
+pystray>=0.19.4
+pyperclip>=1.8.2
+requests>=2.31.0
+colorama>=0.4.6
