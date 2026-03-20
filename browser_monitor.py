@@ -2,12 +2,13 @@
 Devta AI System - Browser & Window Monitor
 ===========================================
 Monitors the active window every N seconds.
-When a browser is detected, extracts the page title/search query
-and asks Devta's brain for a smart suggestion → sends as notification.
+When a known app/browser is detected, it sends a random productivity tip.
+(Now entirely local — uses 0 API tokens to save quota!)
 """
 
 import re
 import time
+import random
 import threading
 from colorama import Fore, Style, init
 from config import NOTIFICATION_INTERVAL_SECONDS
@@ -23,6 +24,17 @@ SEARCH_PATTERNS = [
     r"^(.*?)\s*[-–|]\s*DuckDuckGo$",
     r"^(.*?)\s*[-–|]\s*Yahoo!?\s*Search$",
     r"^Search Results for:?\s*(.*?)$",
+]
+
+# Local productivity tips to avoid burning API quota
+LOCAL_TIPS = [
+    "Take a 5-minute break and stretch your legs! 🚶",
+    "Drink a glass of water to stay hydrated. 💧",
+    "Don't forget the 20-20-20 rule to rest your eyes! 👀",
+    "Focus mode on! Keep at it, you're doing great. 🚀",
+    "Remember to maintain good posture! 🪑",
+    "Quick keyboard shortcut reminder: Win+D to show desktop.",
+    "A clean workspace is a happy workspace. ✨"
 ]
 
 
@@ -59,13 +71,11 @@ class BrowserMonitor:
     Periodically checks the active window and triggers suggestions.
     """
 
-    def __init__(self, brain, notifier, suggestions_enabled_flag: list):
+    def __init__(self, notifier, suggestions_enabled_flag: list):
         """
-        brain: DevtaBrain instance
         notifier: Notifier instance
         suggestions_enabled_flag: a mutable list [bool] shared with main
         """
-        self.brain   = brain
         self.notifier = notifier
         self._enabled = suggestions_enabled_flag  # [True/False], mutable reference
         self._thread  = None
@@ -101,13 +111,12 @@ class BrowserMonitor:
 
                 print(f"{Fore.MAGENTA}🔍 Monitoring: {context}{Style.RESET_ALL}")
 
-                # Ask brain for a suggestion
-                suggestion = self.brain.suggest(context)
-                if suggestion:
-                    self.notifier.send_async(
-                        message=suggestion,
-                        title="💡 Devta Tip"
-                    )
+                # Send a local tip instead of calling the API
+                suggestion = random.choice(LOCAL_TIPS)
+                self.notifier.send_async(
+                    message=f"{context} → {suggestion}",
+                    title="💡 Devta Tip"
+                )
 
             except Exception as e:
                 print(f"{Fore.RED}Monitor error: {e}{Style.RESET_ALL}")

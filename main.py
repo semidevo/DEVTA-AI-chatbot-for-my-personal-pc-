@@ -13,9 +13,10 @@ Entry point. Ties together:
 import sys
 import time
 import threading
-from colorama import Fore, Style, init
+from colorama import Fore, Style
+from logger import get_logger
 
-init(autoreset=True)
+logger = get_logger(__name__)
 
 # Fix Windows encoding for Unicode/box-drawing characters
 if sys.stdout.encoding != 'utf-8':
@@ -52,10 +53,17 @@ _ui = None   # Global UI reference
 # ─────────────────────────────────────────────
 #  Core Interaction Handler
 # ─────────────────────────────────────────────
-def handle_input(user_text: str, brain, system_ctrl, speech_module, source="text"):
+def handle_input(user_text: str, brain: any, system_ctrl: any, speech_module: any, source: str = "text") -> None:
     """
-    Process user input (from voice or text) through the brain,
-    execute any system actions, speak and display the response.
+    Process user input (from voice or text) through the brain.
+    System actions are now executed automatically by the API layer.
+    
+    Args:
+        user_text: User input text
+        brain: DevtaBrain instance
+        system_ctrl: SystemController instance
+        speech_module: Speech module with speak() function
+        source: Source of input ('text' or 'voice')
     """
     if not user_text.strip():
         return
@@ -66,26 +74,26 @@ def handle_input(user_text: str, brain, system_ctrl, speech_module, source="text
         if _ui:
             _ui.set_thinking(True)
 
-        print(f"\n{Fore.WHITE}You [{source}]: {user_text}{Style.RESET_ALL}")
+        logger.info(f"User [{source}]: {user_text}")
 
-        # Get AI response
+        # Get AI response (actions are auto-executed by the API)
         result = brain.ask(user_text)
-        response_text  = result["text"]
-        system_action  = result["system_action"]
-        model_used     = result["model_used"]
+        response_text    = result["text"]
+        model_used       = result["model_used"]
+        actions_executed  = result.get("actions_executed", [])
 
-        print(f"{Fore.MAGENTA}Devta [{model_used}]: {response_text}{Style.RESET_ALL}")
+        logger.info(f"Devta [{model_used}]: {response_text}")
 
         # Update UI
         if _ui:
             _ui.add_devta_message(response_text)
             _ui.set_thinking(False)
 
-        # Execute system action if any
-        if system_action:
-            action_result = system_ctrl.execute(system_action)
+        # Show executed actions in UI
+        for action_result in actions_executed:
             if action_result and _ui:
                 _ui.add_system_message(f"⚙ {action_result}")
+                logger.info(f"Action executed: {action_result}")
 
         # Speak the response
         if source == "voice":
@@ -181,6 +189,7 @@ def make_text_handler(brain, system_ctrl, speech_module):
 #  Main
 # ─────────────────────────────────────────────
 def main():
+    """Main entry point for Devta AI system."""
     global _ui
 
     print(BANNER)
@@ -196,20 +205,21 @@ def main():
         from ui             import DevtaUI
         import speech as speech_module
     except ImportError as e:
-        print(f"{Fore.RED}❌ Import error: {e}")
-        print(f"Please run setup.bat first to install dependencies.{Style.RESET_ALL}")
+        logger.error(f"Import error: {e}")
+        print(f"Please run setup.bat first to install dependencies.")
         sys.exit(1)
 
     # ── Initialize components ─────────────────
-    print(f"{Fore.CYAN}Initializing Devta components...{Style.RESET_ALL}")
-
-    try:
-        brain       = DevtaBrain()
-    except ValueError as e:
-        print(str(e))
-        sys.exit(1)
+    logger.info("Initializing Devta components...")
 
     system_ctrl = SystemController()
+
+    try:
+        brain       = DevtaBrain(system_controller=system_ctrl)
+    except ValueError as e:
+        logger.error(str(e))
+        print(str(e))
+        sys.exit(1)
     notifier    = Notifier()
 
     # ── Wake word listener ────────────────────
@@ -223,7 +233,7 @@ def main():
     handle_input._wake_listener = wake_listener  # share reference
 
     # ── Browser monitor ───────────────────────
-    monitor = BrowserMonitor(brain, notifier, suggestions_enabled)
+    monitor = BrowserMonitor(notifier, suggestions_enabled)
 
     # ── UI ────────────────────────────────────
     text_handler = make_text_handler(brain, system_ctrl, speech_module)
@@ -233,13 +243,14 @@ def main():
         on_close=lambda: (
             wake_listener.stop(),
             monitor.stop(),
-            print(f"{Fore.YELLOW}Devta shutting down. Alvida!{Style.RESET_ALL}")
+            logger.info("Devta shutting down.")
         )
     )
 
     # ── Start background services ──────────────
     wake_listener.start()
     monitor.start()
+    logger.info("Background services started")
 
     # Startup notification
     notifier.send(
@@ -247,9 +258,10 @@ def main():
         title="✦ Devta AI"
     )
 
-    print(f"\n{Fore.GREEN}✅ Devta is fully operational!{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}Wake words: {', '.join(['Hello Devta', 'Bhai Devta'])}{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}Stop phrase: Devta stop{Style.RESET_ALL}\n")
+    logger.info("Devta is fully operational!")
+    print(f"\n✅ Devta is fully operational!")
+    print(f"Wake words: Hello Devta, Bhai Devta")
+    print(f"Stop phrase: Devta stop\n")
 
     # ── Run UI (blocking — main thread) ───────
     _ui.run()

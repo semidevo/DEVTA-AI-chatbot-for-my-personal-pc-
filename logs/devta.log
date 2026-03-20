@@ -1,0 +1,51 @@
+[2026-03-20 16:17:52] [INFO] test: Test log entry from verification script
+[2026-03-20 16:17:52] [WARNING] test: This is a warning test
+[2026-03-20 16:25:41] [INFO] __main__: Initializing Devta components...
+[2026-03-20 16:25:42] [INFO] devta_api: Custom API initialized — Function Calling enabled
+[2026-03-20 16:25:42] [INFO] devta_api: Registered 19 system tools
+[2026-03-20 16:25:42] [INFO] brain: Brain initialized — Custom API with Function Calling
+[2026-03-20 16:26:00] [INFO] __main__: Initializing Devta components...
+[2026-03-20 16:26:01] [INFO] devta_api: Custom API initialized — Function Calling enabled
+[2026-03-20 16:26:01] [INFO] devta_api: Registered 19 system tools
+[2026-03-20 16:26:01] [INFO] brain: Brain initialized — Custom API with Function Calling
+[2026-03-20 16:26:03] [INFO] wake_word: Wake word listener started (always-on mic)
+[2026-03-20 16:26:03] [INFO] __main__: Background services started
+[2026-03-20 16:26:03] [INFO] __main__: Devta is fully operational!
+[2026-03-20 16:26:06] [INFO] wake_word: Using mic: [1] Microphone Array (IntelÂ® Smart 
+[2026-03-20 16:26:06] [INFO] wake_word: Microphone ACTIVE! Say 'Hello Devta' or 'Bhai Devta' to wake me.
+[2026-03-20 16:26:06] [INFO] wake_word: Listening... (you'll see transcripts below)
+[2026-03-20 16:26:11] [INFO] __main__: User [text]: hello devta
+[2026-03-20 16:26:13] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: Namaste! Kaisi ho aap? (Hello! How are you?) How can I help you today?
+[2026-03-20 16:26:13] [INFO] speech: Speaking: Namaste! Kaisi ho aap? (Hello! How are you?) How c...
+[2026-03-20 16:26:27] [INFO] __main__: User [text]: can you open my chrome
+[2026-03-20 16:26:29] [INFO] devta_api: Executing: open_app({'app': 'chrome'})
+[2026-03-20 16:26:29] [INFO] system_control: Opened chrome
+[2026-03-20 16:26:29] [INFO] devta_api: ✓ Result: Opened chrome
+[2026-03-20 16:26:30] [INFO] speech: Speech completed
+[2026-03-20 16:26:30] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: Chrome is open now.
+[2026-03-20 16:26:30] [INFO] __main__: Action executed: Opened chrome
+[2026-03-20 16:26:30] [INFO] speech: Speaking: Chrome is open now....
+[2026-03-20 16:26:37] [INFO] speech: Speech completed
+[2026-03-20 16:27:15] [INFO] __main__: User [text]: give me the photos for any random search you do on chrome
+[2026-03-20 16:27:18] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: Achha, theek hai. (Okay, alright.) I can do a random search for you on Chrome. What kind of random search are you thinking of? Or should I just pick something interesting? And once the search results are open, would you like me to take a screenshot of the page?
+[2026-03-20 16:27:18] [INFO] speech: Speaking: Achha, theek hai. (Okay, alright.) I can do a rand...
+[2026-03-20 16:27:30] [INFO] __main__: User [text]: llm models
+[2026-03-20 16:27:32] [INFO] devta_api: Executing: web_search({'query': 'LLM models images'})
+[2026-03-20 16:27:32] [INFO] system_control: Searching Google for: LLM models images
+[2026-03-20 16:27:32] [INFO] devta_api: ✓ Result: Searching Google for: LLM models images
+[2026-03-20 16:27:33] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: Haan, bilkul! I've opened Chrome and searched for "LLM models images" for you. You should see the results now.
+[2026-03-20 16:27:33] [INFO] __main__: Action executed: Searching Google for: LLM models images
+[2026-03-20 16:27:50] [INFO] speech: Speech completed
+[2026-03-20 16:27:50] [INFO] speech: Speaking: Haan, bilkul! I've opened Chrome and searched for ...
+[2026-03-20 16:27:57] [INFO] __main__: User [text]: tell mme what time it is
+[2026-03-20 16:27:59] [INFO] devta_api: Executing: get_time({})
+[2026-03-20 16:27:59] [INFO] devta_api: ✓ Result: It's 04:27 PM on Friday, March 20, 2026
+[2026-03-20 16:28:00] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: It's 04:27 PM on Friday, March 20, 2026.
+[2026-03-20 16:28:00] [INFO] __main__: Action executed: It's 04:27 PM on Friday, March 20, 2026
+[2026-03-20 16:28:04] [INFO] speech: Speech completed
+[2026-03-20 16:28:04] [INFO] speech: Speaking: It's 04:27 PM on Friday, March 20, 2026....
+[2026-03-20 16:28:10] [INFO] __main__: User [text]: devta stop
+[2026-03-20 16:28:12] [INFO] __main__: Devta [Gemini 2.0 Flash Lite]: Theek hai. I'll be quiet now. Just call me when you need me again.
+[2026-03-20 16:28:14] [INFO] speech: Speech completed
+[2026-03-20 16:28:14] [INFO] speech: Speaking: Theek hai. I'll be quiet now. Just call me when yo...
+[2026-03-20 16:28:24] [INFO] speech: Speech completed

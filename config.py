@@ -31,12 +31,11 @@ STOP_PHRASE = "devta stop"
 RESUME_PHRASES = ["devta resume", "devta start", "devta continue", "deta stop"]
 
 # ─────────────────────────────────────────────
-#  AI Models
+#  API & Model Settings
 # ─────────────────────────────────────────────
-# Primary: fast, free-tier friendly (1500 req/day)
-GEMINI_FLASH_MODEL = "gemini-2.0-flash-lite"
-# Secondary: used for complex tasks (coding, deep analysis)
-GEMINI_PRO_MODEL   = "gemini-2.5-flash"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_FLASH_MODEL = "gemini-2.5-flash"  # Core model (fast, standard logic)
+GEMINI_PRO_MODEL = "gemini-2.5-pro"      # Advanced model (complex reasoning)
 
 # Escalate to Pro model for these task keywords
 PRO_ESCALATION_KEYWORDS = [
@@ -45,12 +44,16 @@ PRO_ESCALATION_KEYWORDS = [
 ]
 
 # ─────────────────────────────────────────────
-#  Voice Settings
+#  Voice Settings — Edge TTS (Neural) + Whisper STT
 # ─────────────────────────────────────────────
-TTS_RATE    = 175   # Words per minute
-TTS_VOLUME  = 1.0   # 0.0 – 1.0
-# Preferred voice (will search for Indian/male voice first, fallback to default)
-PREFERRED_VOICE_KEYWORDS = ["zira", "hazel", "david", "indian", "ravi", "heera"]
+# Edge TTS voice — Indian English male (natural sounding)
+# Other options: "en-IN-NeerjaNeural" (female), "en-US-GuyNeural", "en-GB-RyanNeural"
+EDGE_TTS_VOICE = "en-IN-PrabhatNeural"
+EDGE_TTS_RATE  = 10    # Speed adjustment in % (-50 to +100, 0 = normal)
+EDGE_TTS_PITCH = 0     # Pitch adjustment in Hz (-50 to +50, 0 = normal)
+
+# Whisper STT model size: "tiny" (fast), "base" (balanced), "small" (accurate)
+WHISPER_MODEL_SIZE = "base"
 
 # ─────────────────────────────────────────────
 #  Notifications
@@ -94,16 +97,16 @@ Your personality:
 
 Your capabilities:
 - Have intelligent conversations on any topic
-- Control the user's Windows PC (open apps, manage files, take screenshots, check system status)
-- Browse the web and summarize information
+- Control the user's Windows PC using your tools (open apps, manage files, take screenshots, check system status, adjust volume, etc.)
+- Browse the web and search Google
 - Give smart, proactive suggestions based on what the user is doing
 - Remember context across the entire conversation
 
 Rules:
 - NEVER make up facts. If unsure, say so honestly.
-- For system commands, output a special JSON block like:
-  {"system_action": "open_app", "app": "notepad"}
-  This tells the system what to actually execute.
+- When the user asks you to perform a system action, USE YOUR TOOLS (function calls). Do NOT describe what you would do — actually do it by calling the appropriate function.
+- After executing a tool, confirm what you did in a natural, concise way.
 - Keep responses concise unless detail is specifically requested.
 - When the user says "Devta stop", stop proactive suggestions and go quiet until woken again.
 """
+

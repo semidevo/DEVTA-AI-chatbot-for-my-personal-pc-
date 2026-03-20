@@ -16,9 +16,9 @@ import json
 import zipfile
 import urllib.request
 from pathlib import Path
-from colorama import Fore, Style, init
+from logger import get_logger
 
-init(autoreset=True)
+logger = get_logger(__name__)
 
 # ─────────────────────────────────────────────
 #  Vosk model download (first-run only)
@@ -29,26 +29,30 @@ VOSK_MODEL_ZIP = Path(__file__).parent / "vosk_model.zip"
 
 
 def _ensure_vosk_model():
+    """Download and extract Vosk model if not already present."""
     if VOSK_MODEL_DIR.exists() and any(VOSK_MODEL_DIR.iterdir()):
+        logger.debug("Vosk model already exists")
         return  # Already downloaded
 
-    print(f"{Fore.CYAN}[DEVTA] Downloading Vosk model (~50MB) for offline wake-word detection...{Style.RESET_ALL}")
-    print("    This happens only once. Please wait...")
+    try:
+        logger.info("Downloading Vosk model (~50MB) for offline wake-word detection...")
+        urllib.request.urlretrieve(VOSK_MODEL_URL, VOSK_MODEL_ZIP)
 
-    urllib.request.urlretrieve(VOSK_MODEL_URL, VOSK_MODEL_ZIP)
+        logger.info("Extracting Vosk model...")
+        with zipfile.ZipFile(VOSK_MODEL_ZIP, 'r') as z:
+            z.extractall(Path(__file__).parent)
 
-    print(f"{Fore.CYAN}[DEVTA] Extracting Vosk model...{Style.RESET_ALL}")
-    with zipfile.ZipFile(VOSK_MODEL_ZIP, 'r') as z:
-        z.extractall(Path(__file__).parent)
+        # Rename extracted folder to vosk_model
+        extracted = [d for d in Path(__file__).parent.iterdir()
+                     if d.is_dir() and d.name.startswith("vosk-model")]
+        if extracted:
+            extracted[0].rename(VOSK_MODEL_DIR)
 
-    # Rename extracted folder to vosk_model
-    extracted = [d for d in Path(__file__).parent.iterdir()
-                 if d.is_dir() and d.name.startswith("vosk-model")]
-    if extracted:
-        extracted[0].rename(VOSK_MODEL_DIR)
-
-    VOSK_MODEL_ZIP.unlink(missing_ok=True)
-    print(f"{Fore.GREEN}[DEVTA] Vosk model ready!{Style.RESET_ALL}")
+        VOSK_MODEL_ZIP.unlink(missing_ok=True)
+        logger.info("Vosk model ready!")
+    except Exception as e:
+        logger.error(f"Failed to download/extract Vosk model: {e}", exc_info=True)
+        raise
 
 
 # ─────────────────────────────────────────────
@@ -140,7 +144,7 @@ class WakeWordListener:
         self._running = True
         self._thread  = threading.Thread(target=self._listen_loop, daemon=True)
         self._thread.start()
-        print(f"{Fore.GREEN}[DEVTA] Wake word listener started (always-on mic){Style.RESET_ALL}")
+        logger.info("Wake word listener started (always-on mic)")
 
     def stop(self):
         self._running = False
@@ -178,14 +182,14 @@ class WakeWordListener:
 
             if mic_index is not None:
                 dev_info = pa.get_device_info_by_index(mic_index)
-                print(f"{Fore.CYAN}[DEVTA] Using mic: [{mic_index}] {dev_info['name']}{Style.RESET_ALL}")
+                logger.info(f"Using mic: [{mic_index}] {dev_info['name']}")
             else:
                 try:
                     dev_info = pa.get_default_input_device_info()
                     mic_index = dev_info["index"]
-                    print(f"{Fore.CYAN}[DEVTA] Using system default mic: [{mic_index}] {dev_info['name']}{Style.RESET_ALL}")
+                    logger.info(f"Using system default mic: [{mic_index}] {dev_info['name']}")
                 except Exception:
-                    print(f"{Fore.YELLOW}[DEVTA] Using system default mic (index unknown){Style.RESET_ALL}")
+                    logger.info("Using system default mic (index unknown)")
 
             stream = pa.open(
                 format=pyaudio.paInt16,
@@ -197,8 +201,8 @@ class WakeWordListener:
             )
             stream.start_stream()
 
-            print(f"{Fore.MAGENTA}[DEVTA] Microphone ACTIVE! Say 'Hello Devta' or 'Bhai Devta' to wake me.{Style.RESET_ALL}")
-            print(f"{Fore.MAGENTA}[DEVTA] Listening... (you'll see transcripts below){Style.RESET_ALL}")
+            logger.info("Microphone ACTIVE! Say 'Hello Devta' or 'Bhai Devta' to wake me.")
+            logger.info("Listening... (you'll see transcripts below)")
 
             while self._running:
                 # ── Mic pause: stop reading while voice session has the mic ──
@@ -207,7 +211,7 @@ class WakeWordListener:
                     stream.stop_stream()
                     stream.close()
                     pa.terminate()
-                    print(f"\n{Fore.CYAN}[DEVTA] Mic handed to voice session...{Style.RESET_ALL}")
+                    logger.info("Mic handed to voice session...")
 
                     # Wait until acquire_mic() is called
                     self._mic_released.wait()
@@ -216,7 +220,7 @@ class WakeWordListener:
                         return
 
                     # Re-open the stream
-                    print(f"{Fore.CYAN}[DEVTA] Resuming wake word listening...{Style.RESET_ALL}")
+                    logger.info("Resuming wake word listening...")
                     pa = pyaudio.PyAudio()
                     stream = pa.open(
                         format=pyaudio.paInt16,
@@ -243,15 +247,14 @@ class WakeWordListener:
                 if not text:
                     continue
 
-                # Live transcription
-                print(f"\r{Fore.YELLOW}[MIC] {text:<60}{Style.RESET_ALL}", end="", flush=True)
+                logger.debug(f"Detected: {text}")
 
                 # ── Stop phrase (highest priority) ──
                 if STOP_PHRASE.lower() in text:
                     if self.suggestions_enabled:
                         self.suggestions_enabled = False
                         self.is_active = False
-                        print(f"\n{Fore.YELLOW}[DEVTA] Stop phrase detected - going quiet{Style.RESET_ALL}")
+                        logger.info("Stop phrase detected - going quiet")
                         self.on_stop()
                     continue
 
@@ -259,7 +262,7 @@ class WakeWordListener:
                 if any(rp.lower() in text for rp in RESUME_PHRASES):
                     if not self.suggestions_enabled:
                         self.suggestions_enabled = True
-                        print(f"\n{Fore.GREEN}[DEVTA] Resume phrase detected{Style.RESET_ALL}")
+                        logger.info("Resume phrase detected")
                         self.on_resume()
                     continue
 
@@ -267,7 +270,7 @@ class WakeWordListener:
                 if not self.is_active:
                     if any(ww.lower() in text for ww in WAKE_WORDS):
                         self.is_active = True
-                        print(f"\n{Fore.MAGENTA}[DEVTA] WAKE WORD DETECTED: '{text}' - Activating!{Style.RESET_ALL}")
+                        logger.info(f"WAKE WORD DETECTED: '{text}' - Activating!")
                         # Release mic BEFORE calling on_wake so speech.py can use it
                         self.release_mic()
                         self.on_wake()
@@ -277,11 +280,9 @@ class WakeWordListener:
             pa.terminate()
 
         except ImportError:
-            print(f"{Fore.RED}[DEVTA] Vosk/PyAudio not installed. Run setup.bat first.{Style.RESET_ALL}")
+            logger.error("Vosk/PyAudio not installed. Run setup.bat first.")
         except OSError as e:
-            print(f"{Fore.RED}[DEVTA] Microphone error: {e}{Style.RESET_ALL}")
-            print(f"{Fore.YELLOW}[DEVTA] Make sure your microphone is not in use by another app.{Style.RESET_ALL}")
+            logger.error(f"Microphone error: {e}")
+            logger.warning("Make sure your microphone is not in use by another app.")
         except Exception as e:
-            print(f"{Fore.RED}[DEVTA] Wake word error: {e}{Style.RESET_ALL}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Wake word error: {e}", exc_info=True)
